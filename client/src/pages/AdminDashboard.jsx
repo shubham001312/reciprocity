@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
-import api from '../api';
+import api, { downloadFile } from '../api';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Users, GraduationCap, BookOpen, Plus, Trash2, FileSpreadsheet, Building2, CalendarDays, CheckCircle2, XCircle, Lock, School, Layers, Search, BarChart3, Settings, X, TrendingUp, Clock, AlertTriangle, Target, Award, Activity, ArrowUpRight, Zap, Eye, ChevronRight } from 'lucide-react';
 
@@ -218,7 +218,7 @@ export default function AdminDashboard() {
         <button onClick={() => setShowAddUser(true)} className="flex items-center gap-1.5 px-4 py-2 bg-ink text-paper text-xs font-medium rounded-xl hover:bg-ink/90 shadow-card transition-all cursor-pointer">
           <Plus size={14} /> Add Student
         </button>
-        <button onClick={() => window.open('/api/attendance-export/excel-all', '_blank')} className="flex items-center gap-1.5 px-4 py-2 border border-line bg-surface text-ink-soft text-xs font-medium rounded-xl hover:bg-paper-dim transition-all cursor-pointer">
+        <button onClick={() => downloadFile('/api/attendance-export/excel-all', 'attendance-all-students.xlsx').catch(e => alert('Download failed: ' + e.message))} className="flex items-center gap-1.5 px-4 py-2 border border-line bg-surface text-ink-soft text-xs font-medium rounded-xl hover:bg-paper-dim transition-all cursor-pointer">
           <FileSpreadsheet size={14} /> Export Excel
         </button>
         <button onClick={() => setTab('designations')} className="flex items-center gap-1.5 px-4 py-2 border border-line bg-surface text-ink-soft text-xs font-medium rounded-xl hover:bg-paper-dim transition-all cursor-pointer">

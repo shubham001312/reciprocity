@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
-import api from '../api';
+import api, { downloadFile } from '../api';
 import StatCard from '../components/StatCard';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Download, FileText, Clock, FileSpreadsheet } from 'lucide-react';
@@ -59,19 +59,19 @@ export default function StudentDashboard() {
           <p className="font-mono text-xs text-ink-soft">{new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
           <div className="flex gap-2 mt-2">
             <button
-              onClick={() => window.open(`/api/reports/pdf/${user.id}`, '_blank')}
+              onClick={() => downloadFile(`/api/reports/pdf/${user.id}`, `report-${user.rollNumber || user.id}.pdf`).catch(e => alert('Download failed: ' + e.message))}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-ink text-paper text-xs font-medium rounded-xl hover:bg-ink/90 shadow-card transition-all cursor-pointer"
             >
               <FileText size={13} /> PDF Report
             </button>
             <button
-              onClick={() => window.open(`/api/attendance-export/pdf/${user.id}`, '_blank')}
+              onClick={() => downloadFile(`/api/attendance-export/pdf/${user.id}`, `attendance-${user.rollNumber || user.id}.pdf`).catch(e => alert('Download failed: ' + e.message))}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-line text-ink-soft text-xs font-medium rounded-xl hover:bg-paper-dim transition-all cursor-pointer"
             >
               <Download size={13} /> Attendance PDF
             </button>
             <button
-              onClick={() => window.open(`/api/attendance-export/excel/${user.id}`, '_blank')}
+              onClick={() => downloadFile(`/api/attendance-export/excel/${user.id}`, `attendance-${user.rollNumber || user.id}.xlsx`).catch(e => alert('Download failed: ' + e.message))}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-present/30 text-present text-xs font-medium rounded-xl hover:bg-present-bg transition-all cursor-pointer"
             >
               <FileSpreadsheet size={13} /> Excel

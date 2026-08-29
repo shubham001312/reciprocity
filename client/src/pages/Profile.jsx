@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../components/Toast.jsx';
 import Breadcrumb from '../components/Breadcrumb.jsx';
-import api from '../api';
+import api, { downloadFile } from '../api';
 import { User, Mail, Shield, BookOpen, Clock, Award, LogOut, Calendar, CheckCircle2, Lock, Building2, FileText, FileSpreadsheet, ChevronRight } from 'lucide-react';
 
 export default function Profile() {
@@ -202,11 +202,11 @@ export default function Profile() {
             <div className="flex items-center gap-2">
               {user.role === 'student' && (
                 <>
-                  <button onClick={() => window.open(`/api/attendance-export/pdf/${user.id}`, '_blank')}
+                  <button onClick={() => downloadFile(`/api/attendance-export/pdf/${user.id}`, `attendance-${user.rollNumber || user.id}.pdf`).catch(e => alert('Download failed: ' + e.message))}
                     className="flex items-center gap-1 px-2.5 py-1 border border-line text-ink-soft text-[10px] font-mono rounded-lg hover:bg-paper-dim transition-all cursor-pointer">
                     <FileText size={11} /> PDF
                   </button>
-                  <button onClick={() => window.open(`/api/attendance-export/excel/${user.id}`, '_blank')}
+                  <button onClick={() => downloadFile(`/api/attendance-export/excel/${user.id}`, `attendance-${user.rollNumber || user.id}.xlsx`).catch(e => alert('Download failed: ' + e.message))}
                     className="flex items-center gap-1 px-2.5 py-1 border border-present/30 text-present text-[10px] font-mono rounded-lg hover:bg-present-bg transition-all cursor-pointer">
                     <FileSpreadsheet size={11} /> Excel
                   </button>
