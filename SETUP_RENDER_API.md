@@ -1,71 +1,64 @@
-# Setup Render Auto-Deploy with GitHub Actions
+# Render Auto-Deploy Setup
 
-## Step 1: Get Render API Key
+## How it works
 
-1. Go to [Render Dashboard](https://dashboard.render.com)
-2. Click your avatar → **Account Settings**
-3. Scroll to **API Keys** section
-4. Click **Create API Key**
-5. Name it `github-actions`
-6. Copy the key (shown only once!)
+1. **Native Render auto-deploy** (already working): Push to `main` → Render auto-rebuilds
+2. **GitHub Actions** (optional): Gives cache clearing + health checks + build verification before deploy
 
-## Step 2: Get Service ID
+## Setup Steps
 
-1. Go to your Render service dashboard
-2. The URL is: `https://dashboard.render.com/web/svc-xxxxxxxx`
-3. Copy the `svc-xxxxxxxx` part — that's your Service ID
+### 1. Get Render API Key
+1. Go to [Render Dashboard](https://dashboard.render.com) → **Account Settings** → **API Keys**
+2. Click **Create API Key**
+3. Name it `github-actions`
+4. Copy the key
 
-## Step 3: Add to GitHub Secrets
+### 2. Get Render Service ID
+1. Go to your **reciprocity** service page
+2. The Service ID is in the URL: `dashboard.render.com/web/srv-XXXXX`
+3. Copy `srv-XXXXX`
 
-1. Go to your GitHub repo: `https://github.com/shubham001312/reciprocity`
-2. Click **Settings** → **Secrets and variables** → **Actions**
+### 3. Add GitHub Secrets
+1. Go to your repo: https://github.com/shubham001312/reciprocity
+2. **Settings** → **Secrets and variables** → **Actions**
 3. Click **New repository secret**
-4. Add these two secrets:
+4. Add:
+   - `RENDER_API_KEY` = (your API key)
+   - `RENDER_SERVICE_ID` = `srv-XXXXX`
 
-| Name | Value |
-|------|-------|
-| `RENDER_API_KEY` | The API key from Step 1 |
-| `RENDER_SERVICE_ID` | The service ID from Step 2 |
-
-## Step 4: Test It
-
-Push any change to `main`:
+### 4. Test
+Push any commit to `main`:
 ```bash
 git push origin main
 ```
 
-Go to **Actions** tab on GitHub — you'll see the pipeline running!
+Go to **Actions** tab on GitHub → watch the pipeline run:
+1. ✅ Build & Verify (client build + server modules + route checks)
+2. ✅ Deploy to Render (with cache clear)
+3. ✅ Health check (verifies site returns 200)
 
-## How It Works
+## Cache Clearing
 
-```
-Push to main
-    ↓
-GitHub Actions triggers
-    ↓
-Build & Verify (client build + server checks)
-    ↓ ✅ All passed
-Deploy to Render (via API)
-    ↓
-Live at https://reciprocity.onrender.com
-```
+The GitHub Actions deploy uses `johnbeynon/render-deploy-action` which:
+- Clears Render's build cache before deploying
+- Forces a fresh install of all dependencies
+- This prevents stale cached builds from causing issues
 
-## Without Render API Keys
-
-If you don't set up the API keys, the **CI pipeline** still runs on every push:
-- ✅ Client builds successfully
-- ✅ Server modules load correctly
-- ✅ All route files present
-
-Render's built-in auto-deploy still works (connected via GitHub integration).
+If you ever need to manually clear cache:
+1. Go to Render dashboard → your service
+2. **Manual Deploy** → **Clear build cache & deploy**
 
 ## Troubleshooting
 
-**Build fails in Actions?**
-- Check the Actions tab for detailed logs
-- Usually a missing dependency or syntax error
+### Build fails with "vite not found"
+→ Render is using wrong Node version. Check `render.yaml` has `nodeVersion: "18.20.8"`
 
-**Deploy fails?**
-- Verify `RENDER_API_KEY` is correct
-- Verify `RENDER_SERVICE_ID` matches your service
-- Check Render dashboard for deployment logs
+### Deploy fails with "express not found"
+→ Server dependencies not installed. Check build command includes `cd server && npm install`
+
+### Health check returns 503
+→ Server is still starting up. Wait 2-3 minutes and check again.
+
+### MongoDB connection fails on Render
+→ Check IP whitelist in MongoDB Atlas (add 0.0.0.0/0)
+→ Check MONGODB_URI env var in Render matches your Atlas connection string
