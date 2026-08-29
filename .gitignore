@@ -11,3 +11,4 @@ tmp/
 atlas-credentials.env
 *.env
 server/data/
+tok.txt
