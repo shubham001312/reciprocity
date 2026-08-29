@@ -5,12 +5,12 @@ import { v4 as uuid } from 'uuid';
 
 const router = Router();
 
-router.get('/', authenticate, async (req, res) => {
+router.get('/', async (req, res) => {
   const subjects = await col('subjects').find().toArray();
   res.json(subjects);
 });
 
-router.get('/:id', authenticate, async (req, res) => {
+router.get('/:id', async (req, res) => {
   const subject = await col('subjects').findOne({ _id: req.params.id });
   if (!subject) return res.status(404).json({ error: 'Subject not found' });
   res.json(subject);

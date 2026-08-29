@@ -4,7 +4,7 @@ import { authenticate } from '../middleware/auth.js';
 
 const router = Router();
 
-router.get('/', authenticate, async (req, res) => {
+router.get('/', async (req, res) => {
   const syllabus = await col('syllabus').find().toArray();
   const subjects = await col('subjects').find().toArray();
   const notes = await col('notes').find().toArray();
@@ -32,7 +32,7 @@ router.get('/', authenticate, async (req, res) => {
   res.json(result);
 });
 
-router.get('/:subjectId', authenticate, async (req, res) => {
+router.get('/:subjectId', async (req, res) => {
   const s = await col('syllabus').findOne({ subjectId: req.params.subjectId });
   if (!s) return res.status(404).json({ error: 'Syllabus not found' });
   const subject = await col('subjects').findOne({ _id: s.subjectId });

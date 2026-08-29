@@ -64,6 +64,17 @@ function jsonCol(name) {
       }
       return Promise.resolve();
     },
+    updateMany: (filter, update) => {
+      let changed = false;
+      data.forEach(d => {
+        if (matchFilter(d, filter)) {
+          if (update.$set) Object.assign(d, update.$set);
+          changed = true;
+        }
+      });
+      if (changed) jsonSet(name, data);
+      return Promise.resolve();
+    },
     deleteOne: (filter) => {
       data = data.filter(d => !matchFilter(d, filter));
       jsonSet(name, data);
@@ -98,11 +109,20 @@ function jsonCol(name) {
 
 function filterData(data, filter) {
   if (!filter || Object.keys(filter).length === 0) return data;
+  // Support top-level $or
+  if (filter.$or) {
+    return data.filter(d => filter.$or.some(subFilter => matchFilter(d, subFilter)));
+  }
   return data.filter(d => matchFilter(d, filter));
 }
 
 function matchFilter(doc, filter) {
+  // Support $or inside nested filters
+  if (filter.$or) {
+    return filter.$or.some(sub => matchFilter(doc, sub));
+  }
   for (const [key, val] of Object.entries(filter)) {
+    if (key === '$or') continue;
     if (val && typeof val === 'object' && !Array.isArray(val)) {
       if (val.$in) {
         if (!val.$in.includes(doc[key])) return false;

@@ -50,6 +50,9 @@ export default function Colleges() {
     setHasMore(true);
     setLoading(true);
     isLoadingRef.current = false;
+    // Directly call loadPage when page is already 1
+    // (setPage(1) won't trigger useEffect if page is already 1)
+    setTimeout(() => loadPage(1, true), 0);
   };
 
   // Load page when page changes
