@@ -12,3 +12,7 @@ atlas-credentials.env
 *.env
 server/data/
 tok.txt
+graphify-out/
+RECIPROCITY_Technical_Plan.md
+RECIPROCITY_demo_DESIGN.html
+tok.txt
