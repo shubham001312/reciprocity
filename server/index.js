@@ -33,11 +33,53 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
-app.use(cors({ origin: process.env.NODE_ENV === 'production' ? ['https://reciprocity-live.onrender.com'] : '*', credentials: true }));
+const isProd = process.env.NODE_ENV === 'production';
+
+// HTTPS enforcement (Render handles TLS termination, so we trust X-Forwarded-Proto)
+if (isProd) {
+  app.use((req, res, next) => {
+    if (req.headers['x-forwarded-proto'] !== 'https' && !req.path.startsWith('/api/health')) {
+      return res.redirect(301, `https://${req.headers.host}${req.url}`);
+    }
+    next();
+  });
+}
+
+// Strict CSP — allows only our domain, inline styles for Tailwind, Google Fonts
+const cspDirectives = {
+  defaultSrc: ["'self'"],
+  scriptSrc: ["'self'"],
+  styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+  fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+  imgSrc: ["'self'", 'data:', 'https:'],
+  connectSrc: ["'self'", 'https://reciprocity.vjwfnkp.mongodb.net'],
+  frameSrc: ["'none'"],
+  objectSrc: ["'none'"],
+  baseUri: ["'self'"],
+  formAction: ["'self'"],
+  upgradeInsecureRequests: isProd ? [] : null,
+};
+
+app.use(helmet({
+  contentSecurityPolicy: { directives: cspDirectives },
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: { policy: 'same-site' },
+  hsts: isProd ? { maxAge: 31536000, includeSubDomains: true, preload: true } : false,
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  noSniff: true,
+  frameguard: { action: 'sameorigin' },
+}));
+
+app.use(cors({
+  origin: isProd ? ['https://reciprocity-live.onrender.com'] : '*',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  maxAge: 86400,
+}));
 app.use(express.json({ limit: '1mb' }));
 
-// Rate limiting: 100 requests per 15 min per IP (general)
+// Rate limiting: 200 requests per 15 min per IP (general)
 const generalLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 200, standardHeaders: true, legacyHeaders: false, message: { error: 'Too many requests, please try again later' } });
 app.use('/api/', generalLimiter);
 
