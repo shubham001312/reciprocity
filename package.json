@@ -10,7 +10,7 @@
     "postinstall": "cd client && npm install && cd ../server && npm install"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": "18.20.8"
   },
   "keywords": ["education", "attendance", "college", "ranking", "mern"],
   "author": "Shubham Mallick",

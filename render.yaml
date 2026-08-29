@@ -3,8 +3,8 @@ services:
     name: reciprocity
     runtime: node
     plan: free
-    buildCommand: cd client && npm install --include=dev && npm run build && cd ../server && npm install
-    startCommand: cd server && node index.js
+    buildCommand: npm install --include=dev && cd client && npm install --include=dev && npm run build
+    startCommand: node server/index.js
     envVars:
       - key: NODE_ENV
         value: production
@@ -12,6 +12,8 @@ services:
         value: 10000
       - key: NPM_CONFIG_PRODUCTION
         value: "false"
+      - key: NODE_VERSION
+        value: "18.20.8"
       - key: MONGODB_URI
         sync: false
       - key: JWT_SECRET
