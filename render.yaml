@@ -3,7 +3,8 @@ services:
     name: reciprocity
     runtime: node
     plan: free
-    buildCommand: cd client && npm install && npm run build
+    nodeVersion: "18.20.8"
+    buildCommand: cd client && npm install --include=dev && npm run build
     startCommand: cd server && node index.js
     envVars:
       - key: NODE_ENV
