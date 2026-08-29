@@ -1,14 +1,13 @@
 {
   "name": "reciprocity",
   "version": "1.0.0",
-  "description": "RECIPROCITY — Academic Accountability Platform for Colleges, Professors, and Students",
+  "description": "RECIPROCITY — Academic Accountability Platform",
   "private": true,
   "scripts": {
-    "dev": "cd server && npm run dev",
-    "build": "cd client && npm run build",
-    "start": "cd server && npm start",
-    "postinstall": "cd client && npm install && cd ../server && npm install",
-    "setup": "npm install && npm run build"
+    "dev": "cd server && node --watch index.js",
+    "build": "cd client && npm install && npm run build",
+    "start": "cd server && node index.js",
+    "postinstall": "cd client && npm install && cd ../server && npm install"
   },
   "engines": {
     "node": ">=18.0.0"
