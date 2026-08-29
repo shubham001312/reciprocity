@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { col } from '../utils/db.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { v4 as uuid } from 'uuid';
+import { auditLog, AUDIT } from '../utils/audit.js';
 
 const router = Router();
 
@@ -26,6 +27,7 @@ router.post('/', authenticate, authorize('professor', 'admin'), async (req, res)
     enteredAt: new Date().toISOString(),
   };
   await col('marks').insertOne(newMark);
+  auditLog(AUDIT.MARKS_ENTERED, { studentId, subjectId, examType, marksObtained, maxMarks: maxMarks || 100, semester }, { req, user: req.user });
   res.status(201).json(newMark);
 });
 

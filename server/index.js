@@ -26,6 +26,8 @@ import profilesRoutes from './routes/profiles.js';
 import collegeRegisterRoutes from './routes/college-register.js';
 import noticesRoutes from './routes/notices.js';
 import messagesRoutes from './routes/messages.js';
+import { auditMiddleware, getAuditLogs, auditLog, AUDIT } from './utils/audit.js';
+import { authenticate, authorize } from './middleware/auth.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -89,8 +91,18 @@ app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/signup', authLimiter);
 app.use('/uploads', express.static(join(__dirname, 'uploads')));
 
+// Audit logging middleware (after auth, before routes)
+app.use(auditMiddleware);
+
 // Health check FIRST
 app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
+
+// Audit logs endpoint (admin only)
+app.get('/api/audit-logs', authenticate, authorize('admin'), async (req, res) => {
+  const { limit = 50, filter } = req.query;
+  const logs = await getAuditLogs(parseInt(limit) || 50, filter || null);
+  res.json(logs);
+});
 
 // API Routes
 app.use('/api/auth', authRoutes);

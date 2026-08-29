@@ -3,6 +3,7 @@ import { col } from '../utils/db.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import bcrypt from 'bcryptjs';
 import { v4 as uuid } from 'uuid';
+import { auditLog, AUDIT } from '../utils/audit.js';
 
 const router = Router();
 
@@ -75,7 +76,9 @@ router.put('/:id', authenticate, authorize('admin'), async (req, res) => {
 });
 
 router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
+  const deleted = await col('users').findOne({ _id: req.params.id });
   await col('users').deleteOne({ _id: req.params.id });
+  auditLog(AUDIT.USER_DELETED, { targetUserId: req.params.id, targetName: deleted?.name, targetRole: deleted?.role }, { req, user: req.user });
   res.json({ message: 'User deleted' });
 });
 

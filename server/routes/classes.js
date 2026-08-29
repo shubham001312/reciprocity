@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { col } from '../utils/db.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { v4 as uuid } from 'uuid';
+import { auditLog, AUDIT } from '../utils/audit.js';
 
 const router = Router();
 
@@ -44,6 +45,7 @@ router.post('/', authenticate, authorize('professor', 'admin'), async (req, res)
     createdAt: new Date().toISOString(),
   };
   await col('classes').insertOne(newClass);
+  auditLog(AUDIT.CLASS_CREATED, { classId: newClass._id, subjectId, topic, year, semester, section, stream }, { req, user: req.user });
   res.status(201).json(newClass);
 });
 

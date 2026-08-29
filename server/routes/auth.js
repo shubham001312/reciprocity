@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { col } from '../utils/db.js';
 import { JWT_SECRET, authenticate } from '../middleware/auth.js';
 import { v4 as uuid } from 'uuid';
+import { auditLog, AUDIT } from '../utils/audit.js';
 
 const router = Router();
 
@@ -34,6 +35,7 @@ router.post('/signup', async (req, res) => {
     };
     await col('users').insertOne(newUser);
     const token = jwt.sign({ id: newUser._id, email, role, name }, JWT_SECRET, { expiresIn: '7d' });
+    auditLog(AUDIT.SIGNUP, { email, role, name }, { req, userId: newUser._id, userRole: role, userName: name });
     const { password: _, _id, ...rest } = newUser;
     res.status(201).json({ user: { id: _id, ...rest }, token });
   } catch (err) {
@@ -46,10 +48,17 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await col('users').findOne({ email });
-    if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+    if (!user) {
+      auditLog(AUDIT.LOGIN_FAILED, { email, reason: 'user_not_found' }, { req });
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
     const valid = await bcrypt.compare(password, user.password);
-    if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
+    if (!valid) {
+      auditLog(AUDIT.LOGIN_FAILED, { email, reason: 'wrong_password' }, { req, userId: user._id, userRole: user.role, userName: user.name });
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
     const token = jwt.sign({ id: user._id, email: user.email, role: user.role, name: user.name }, JWT_SECRET, { expiresIn: '7d' });
+    auditLog(AUDIT.LOGIN_SUCCESS, { email }, { req, userId: user._id, userRole: user.role, userName: user.name });
     const { password: _, _id, ...rest } = user;
     res.json({ user: { id: _id, ...rest }, token });
   } catch (err) {
