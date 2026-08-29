@@ -3,6 +3,7 @@ import { col } from '../utils/db.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { v4 as uuid } from 'uuid';
 import { auditLog, AUDIT } from '../utils/audit.js';
+import { sanitizeBody, maxLength } from '../utils/sanitize.js';
 
 const router = Router();
 
@@ -29,7 +30,7 @@ router.get('/filters', authenticate, async (req, res) => {
   res.json({ years, semesters, sections, streams });
 });
 
-router.post('/', authenticate, authorize('professor', 'admin'), async (req, res) => {
+router.post('/', authenticate, authorize('professor', 'admin'), sanitizeBody(['topic']), maxLength(500), async (req, res) => {
   const { subjectId, date, topic, duration, studentsPresent, totalStudents, year, semester, section, stream } = req.body;
   const professorId = req.user.role === 'admin' ? (req.body.professorId || req.user.id) : req.user.id;
   const newClass = {

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import api from '../api';
 import { Bell, Plus, X, AlertTriangle, Calendar, BookOpen, Megaphone, Clock, CheckCircle2, ChevronRight } from 'lucide-react';
+import { sanitize, sanitizePreview } from '../sanitize';
 
 const CATEGORY_CONFIG = {
   general: { label: 'General', icon: Megaphone, color: 'text-teal', bg: 'bg-teal-bg' },
@@ -135,12 +136,12 @@ export default function NoticeBoard() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <h3 className="font-serif font-semibold text-ink">{n.title}</h3>
+                      <h3 className="font-serif font-semibold text-ink">{sanitize(n.title)}</h3>
                       {isUnread && <span className="w-2 h-2 rounded-full bg-teal shrink-0"></span>}
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${priConfig.color}`}>{priConfig.label}</span>
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${catConfig.bg} ${catConfig.color}`}>{catConfig.label}</span>
                     </div>
-                    <p className="text-sm text-ink-soft leading-relaxed mb-3">{n.content}</p>
+                    <p className="text-sm text-ink-soft leading-relaxed mb-3">{sanitizePreview(n.content, 150)}</p>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3 text-[10px] text-ink-muted font-mono">
                         <span className="flex items-center gap-1"><Clock size={10} /> {timeAgo(n.createdAt)}</span>

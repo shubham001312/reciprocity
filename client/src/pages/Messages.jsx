@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import api from '../api';
 import { Send, Search, X, MessageSquare, User, Clock, ArrowLeft } from 'lucide-react';
+import { sanitize, sanitizePreview } from '../sanitize';
 
 export default function Messages() {
   const { user } = useAuth();
@@ -133,7 +134,7 @@ export default function Messages() {
                       <span className="text-[10px] text-ink-muted shrink-0">{timeAgo(c.lastMessageAt)}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-ink-muted truncate">{c.lastMessage}</span>
+                      <span className="text-xs text-ink-muted truncate">{sanitizePreview(c.lastMessage, 50)}</span>
                       {c.unread > 0 && (
                         <span className="w-5 h-5 rounded-full bg-teal text-paper text-[10px] font-bold flex items-center justify-center shrink-0 ml-2">{c.unread}</span>
                       )}
@@ -174,7 +175,7 @@ export default function Messages() {
                           ? 'bg-teal text-paper rounded-br-md'
                           : 'bg-paper-dim text-ink rounded-bl-md'
                       }`}>
-                        <p>{m.content}</p>
+                        <p>{sanitize(m.content)}</p>
                         <div className={`text-[9px] mt-1 ${isMine ? 'text-paper/50' : 'text-ink-muted'}`}>
                           {new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           {isMine && !m.read && <span className="ml-1">✓</span>}

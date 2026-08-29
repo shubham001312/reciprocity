@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { col } from '../utils/db.js';
 import { authenticate } from '../middleware/auth.js';
 import { v4 as uuid } from 'uuid';
+import { sanitizeBody, maxLength } from '../utils/sanitize.js';
 
 const router = Router();
 
@@ -73,7 +74,7 @@ router.get('/:userId', authenticate, async (req, res) => {
 });
 
 // POST /api/messages — Send a message
-router.post('/', authenticate, async (req, res) => {
+router.post('/', authenticate, sanitizeBody(['content']), maxLength(5000), async (req, res) => {
   try {
     const { to, content } = req.body;
     if (!to || !content) return res.status(400).json({ error: 'Recipient and content required' });

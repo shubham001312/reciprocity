@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import api from '../api';
 import StatCard from '../components/StatCard';
+import { sanitize } from '../sanitize';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Plus, BookOpen, FileText, Upload, BarChart3, ClipboardList, CheckCircle2, XCircle, UserCheck, Save, Search, Zap, Calendar } from 'lucide-react';
 import AttendanceEngine from '../components/AttendanceEngine';
@@ -275,7 +276,7 @@ export default function ProfessorDashboard() {
                   <option value="">— Choose a class to mark attendance —</option>
                   {classes.map(c => (
                     <option key={c.id} value={c.id}>
-                      {c.date} — {getSubjectName(c.subjectId)} — {c.topic}
+                      {c.date} — {getSubjectName(c.subjectId)} — {sanitize(c.topic)}
                     </option>
                   ))}
                 </select>

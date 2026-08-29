@@ -3,11 +3,12 @@ import { col } from '../utils/db.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { v4 as uuid } from 'uuid';
 import bcrypt from 'bcryptjs';
+import { sanitizeBody, maxLength } from '../utils/sanitize.js';
 
 const router = Router();
 
 // POST /api/college-register — College registers itself (one admin per college)
-router.post('/', async (req, res) => {
+router.post('/', sanitizeBody(['collegeName', 'collegeCode']), maxLength(500), async (req, res) => {
   try {
     const { collegeName, collegeCode, email, password, name, department, established, address, website, accreditation, affiliation, streams } = req.body;
 

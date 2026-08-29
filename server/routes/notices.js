@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { col } from '../utils/db.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { v4 as uuid } from 'uuid';
+import { sanitizeBody, maxLength } from '../utils/sanitize.js';
 
 const router = Router();
 
@@ -30,7 +31,7 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 // POST /api/notices — Create notice (admin/professor only)
-router.post('/', authenticate, authorize('admin', 'professor'), async (req, res) => {
+router.post('/', authenticate, authorize('admin', 'professor'), sanitizeBody(['title', 'content']), maxLength(5000), async (req, res) => {
   try {
     const { title, content, category, priority } = req.body;
     if (!title || !content) return res.status(400).json({ error: 'Title and content are required' });

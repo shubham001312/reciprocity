@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { col } from '../utils/db.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { v4 as uuid } from 'uuid';
+import { sanitizeBody, maxLength } from '../utils/sanitize.js';
 
 const router = Router();
 
@@ -15,7 +16,7 @@ router.get('/', authenticate, async (req, res) => {
   res.json(notes);
 });
 
-router.post('/', authenticate, authorize('professor'), async (req, res) => {
+router.post('/', authenticate, authorize('professor'), sanitizeBody(['title', 'content']), maxLength(5000), async (req, res) => {
   const { subjectId, title, topicsCovered, content } = req.body;
   const newNote = {
     _id: `note-${uuid().substring(0, 8)}`,
