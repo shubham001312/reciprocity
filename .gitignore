@@ -1,0 +1,13 @@
+node_modules/
+client/dist/
+server/data/
+server/uploads/
+.env
+*.log
+.DS_Store
+Thumbs.db
+.graphify-out/
+tmp/
+atlas-credentials.env
+*.env
+server/data/
