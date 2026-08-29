@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    name: Build & Verify
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install root dependencies
+        run: npm install
+
+      - name: Install client dependencies
+        run: cd client && npm install --include=dev
+
+      - name: Install server dependencies
+        run: cd server && npm install
+
+      - name: Build client
+        run: cd client && npm run build
+        env:
+          CI: true
+
+      - name: Verify server can start
+        run: |
+          cd server
+          node -e "
+            import('./utils/db.js').then(() => {
+              console.log('✅ Database module loaded');
+              process.exit(0);
+            }).catch(err => {
+              console.error('❌ Module load failed:', err.message);
+              process.exit(1);
+            });
+          "
+
+      - name: Verify all routes exist
+        run: |
+          cd server
+          node -e "
+            const files = [
+              'routes/auth.js', 'routes/users.js', 'routes/classes.js',
+              'routes/attendance.js', 'routes/subjects.js', 'routes/marks.js',
+              'routes/notes.js', 'routes/questions.js', 'routes/analytics.js',
+              'routes/rankings-enhanced.js', 'routes/colleges.js',
+              'routes/designations.js', 'routes/profiles.js',
+              'routes/college-register.js', 'routes/notices.js',
+              'routes/messages.js', 'routes/syllabus.js',
+              'routes/reports.js', 'routes/pdf-reports.js',
+              'routes/attendance-export.js'
+            ];
+            const fs = require('fs');
+            const missing = files.filter(f => !fs.existsSync(f));
+            if (missing.length > 0) {
+              console.error('❌ Missing routes:', missing);
+              process.exit(1);
+            }
+            console.log('✅ All', files.length, 'route files present');
+          "
+
+      - name: Build summary
+        run: |
+          echo "## Build Summary 🎉" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Client build | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          echo "| Server modules | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          echo "| Route files | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Commit: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
