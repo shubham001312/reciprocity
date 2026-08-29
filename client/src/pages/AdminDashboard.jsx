@@ -25,7 +25,7 @@ export default function AdminDashboard() {
 
   // Modals
   const [showAddUser, setShowAddUser] = useState(false);
-  const [newUser, setNewUser] = useState({ name: '', email: '', password: 'password123', role: 'student', department: '', year: '', section: '', stream: '', semester: '' });
+  const [newUser, setNewUser] = useState({ name: '', rollNumber: '', dob: '', role: 'student', department: '', year: '', section: '', stream: '', semester: '' });
   const [showAddClass, setShowAddClass] = useState(false);
   const [newClass, setNewClass] = useState({ subjectId: '', professorId: '', date: '', topic: '', duration: 55, year: '', semester: '', section: 'A', stream: 'CSE' });
 
@@ -60,7 +60,7 @@ export default function AdminDashboard() {
     try {
       await api.post('/users', { ...newUser, year: newUser.year ? parseInt(newUser.year) : null, semester: newUser.semester ? parseInt(newUser.semester) : null });
       setShowAddUser(false);
-      setNewUser({ name: '', email: '', password: 'password123', role: 'student', department: '', year: '', section: '', stream: '', semester: '' });
+      setNewUser({ name: '', rollNumber: '', dob: '', role: 'student', department: '', year: '', section: '', stream: '', semester: '' });
       loadData();
     } catch (err) { setError(err.response?.data?.error || 'Failed to add user'); }
   };
@@ -661,19 +661,27 @@ export default function AdminDashboard() {
               <button onClick={() => setShowAddUser(false)} className="text-ink-soft hover:text-ink cursor-pointer"><X size={18} /></button>
             </div>
             <form onSubmit={addUser} className="space-y-3">
-              <input type="text" placeholder="Name" value={newUser.name} onChange={e => setNewUser({...newUser, name: e.target.value})} required className="w-full border border-line rounded-xl px-3 py-2 text-sm bg-paper focus:outline-none focus:border-teal" />
-              <input type="email" placeholder="Email" value={newUser.email} onChange={e => setNewUser({...newUser, email: e.target.value})} required className="w-full border border-line rounded-xl px-3 py-2 text-sm bg-paper focus:outline-none focus:border-teal" />
+              <input type="text" placeholder="Full Name" value={newUser.name} onChange={e => setNewUser({...newUser, name: e.target.value})} required className="w-full border border-line rounded-xl px-3 py-2 text-sm bg-paper focus:outline-none focus:border-teal" />
               <select value={newUser.role} onChange={e => setNewUser({...newUser, role: e.target.value})} className="w-full border border-line rounded-xl px-3 py-2 text-sm bg-paper focus:outline-none focus:border-teal cursor-pointer">
                 <option value="student">Student</option>
                 <option value="professor">Professor</option>
               </select>
               <input type="text" placeholder="Department" value={newUser.department} onChange={e => setNewUser({...newUser, department: e.target.value})} className="w-full border border-line rounded-xl px-3 py-2 text-sm bg-paper focus:outline-none focus:border-teal" />
               {newUser.role === 'student' && (
-                <div className="grid grid-cols-3 gap-2">
-                  <input type="number" placeholder="Year" value={newUser.year} onChange={e => setNewUser({...newUser, year: e.target.value})} className="border border-line rounded-xl px-3 py-2 text-sm bg-paper focus:outline-none focus:border-teal" />
-                  <input type="number" placeholder="Sem" value={newUser.semester} onChange={e => setNewUser({...newUser, semester: e.target.value})} className="border border-line rounded-xl px-3 py-2 text-sm bg-paper focus:outline-none focus:border-teal" />
-                  <input type="text" placeholder="Section" value={newUser.section} onChange={e => setNewUser({...newUser, section: e.target.value})} className="border border-line rounded-xl px-3 py-2 text-sm bg-paper focus:outline-none focus:border-teal" />
-                </div>
+                <>
+                  <input type="text" placeholder="Roll Number (e.g. 2024CSE0142)" value={newUser.rollNumber} onChange={e => setNewUser({...newUser, rollNumber: e.target.value})} required className="w-full border border-line rounded-xl px-3 py-2 text-sm bg-paper focus:outline-none focus:border-teal" />
+                  <input type="date" placeholder="Date of Birth" value={newUser.dob} onChange={e => setNewUser({...newUser, dob: e.target.value})} required className="w-full border border-line rounded-xl px-3 py-2 text-sm bg-paper focus:outline-none focus:border-teal" />
+                  <div className="bg-paper-dim rounded-xl px-3 py-2 text-xs text-ink-muted">
+                    <span className="font-medium text-ink-soft">Login ID:</span> {newUser.rollNumber ? `${newUser.rollNumber}@${user?.collegeCode?.toLowerCase() || 'makaut'}.ac.in` : '—'}
+                    <br/>
+                    <span className="font-medium text-ink-soft">Password:</span> DOB as DDMMYYYY (auto-set from date of birth)
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <input type="number" placeholder="Year" value={newUser.year} onChange={e => setNewUser({...newUser, year: e.target.value})} className="border border-line rounded-xl px-3 py-2 text-sm bg-paper focus:outline-none focus:border-teal" />
+                    <input type="number" placeholder="Sem" value={newUser.semester} onChange={e => setNewUser({...newUser, semester: e.target.value})} className="border border-line rounded-xl px-3 py-2 text-sm bg-paper focus:outline-none focus:border-teal" />
+                    <input type="text" placeholder="Section" value={newUser.section} onChange={e => setNewUser({...newUser, section: e.target.value})} className="border border-line rounded-xl px-3 py-2 text-sm bg-paper focus:outline-none focus:border-teal" />
+                  </div>
+                </>
               )}
               <div className="flex gap-2 pt-2">
                 <button type="button" onClick={() => setShowAddUser(false)} className="flex-1 px-4 py-2 border border-line text-ink-soft text-sm rounded-xl hover:bg-paper-dim cursor-pointer">Cancel</button>

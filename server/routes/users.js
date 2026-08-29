@@ -47,22 +47,48 @@ router.get('/students', authenticate, async (req, res) => {
 });
 
 router.post('/', authenticate, authorize('admin'), async (req, res) => {
-  const { name, email, password, role, rollNumber, department, year, section, stream, semester } = req.body;
-  const existing = await col('users').findOne({ email });
+  const { name, email, password, role, rollNumber, department, year, section, stream, semester, dob } = req.body;
+  
+  // Auto-generate email and password from DOB for students
+  let finalEmail = email;
+  let finalPassword = password;
+  
+  if (role === 'student' && dob) {
+    // Format DOB as DD/MM/YYYY → password = DDMMYYYY
+    const dobParts = dob.split(/[/\-]/);
+    if (dobParts.length === 3) {
+      const [dd, mm, yyyy] = dobParts;
+      finalPassword = `${dd}${mm}${yyyy}`;
+    }
+    // Auto-generate email if not provided: rollNumber@collegeDomain
+    if (!finalEmail && rollNumber) {
+      const admin = await col('users').findOne({ _id: req.user.id });
+      const domain = admin?.collegeCode ? `${admin.collegeCode.toLowerCase()}.ac.in` : 'reciprocity.ac.in';
+      finalEmail = `${rollNumber}@${domain}`;
+    }
+  }
+  
+  if (!finalEmail) return res.status(400).json({ error: 'Email is required' });
+  if (!name) return res.status(400).json({ error: 'Name is required' });
+  
+  const existing = await col('users').findOne({ email: finalEmail });
   if (existing) return res.status(409).json({ error: 'Email already exists' });
-  const hashed = await bcrypt.hash(password || 'password123', 10);
+  
+  const hashed = await bcrypt.hash(finalPassword || 'password123', 10);
   const newUser = {
     _id: `${role.substring(0, 4)}-${uuid().substring(0, 8)}`,
-    name, email, password: hashed, role,
+    name, email: finalEmail, password: hashed, role,
     rollNumber: rollNumber || null,
     department: department || '',
     year: year || null,
     section: section || null,
     stream: stream || null,
     semester: semester || null,
+    dob: dob || null,
     createdAt: new Date().toISOString(),
   };
   await col('users').insertOne(newUser);
+  auditLog(AUDIT.USER_CREATED, { targetUserId: newUser._id, targetName: name, targetRole: role, email: finalEmail }, { req, user: req.user });
   const { password: _, _id, ...rest } = newUser;
   res.status(201).json({ id: _id, ...rest });
 });
