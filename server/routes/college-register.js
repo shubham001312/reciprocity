@@ -107,9 +107,10 @@ router.get('/directory', async (req, res) => {
   admins.forEach(a => { if (a.collegeCode) adminMap[a.collegeCode] = a.name; });
   const regCodeSet = new Set(registeredColleges.map(c => c.code));
 
-  // Enrich with admin + registered status
+  // Enrich with admin + registered status (only for matching subset)
   let enriched = colleges.map(c => ({
-    ...c,
+    _id: c._id, name: c.name, code: c.code, state: c.state, city: c.city,
+    district: c.district, type: c.type, university: c.university, affiliation: c.affiliation,
     hasAdmin: !!adminMap[c.code],
     adminName: adminMap[c.code] || null,
     isRegistered: regCodeSet.has(c.code),

@@ -13,6 +13,15 @@ router.post('/signup', async (req, res) => {
     if (!name || !email || !password || !role) {
       return res.status(400).json({ error: 'Name, email, password, and role are required' });
     }
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+    if (!['student', 'professor', 'admin'].includes(role)) {
+      return res.status(400).json({ error: 'Invalid role' });
+    }
     const existing = await col('users').findOne({ email });
     if (existing) return res.status(409).json({ error: 'Email already registered' });
     const hashed = await bcrypt.hash(password, 10);
@@ -28,7 +37,8 @@ router.post('/signup', async (req, res) => {
     const { password: _, _id, ...rest } = newUser;
     res.status(201).json({ user: { id: _id, ...rest }, token });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Signup error:', err.message);
+    res.status(500).json({ error: 'Registration failed' });
   }
 });
 
@@ -43,7 +53,8 @@ router.post('/login', async (req, res) => {
     const { password: _, _id, ...rest } = user;
     res.json({ user: { id: _id, ...rest }, token });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Login error:', err.message);
+    res.status(500).json({ error: 'Login failed' });
   }
 });
 

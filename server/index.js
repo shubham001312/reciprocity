@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { existsSync } from 'fs';
@@ -31,8 +33,18 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
-app.use(express.json());
+app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
+app.use(cors({ origin: process.env.NODE_ENV === 'production' ? ['https://reciprocity-live.onrender.com'] : '*', credentials: true }));
+app.use(express.json({ limit: '1mb' }));
+
+// Rate limiting: 100 requests per 15 min per IP (general)
+const generalLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 200, standardHeaders: true, legacyHeaders: false, message: { error: 'Too many requests, please try again later' } });
+app.use('/api/', generalLimiter);
+
+// Stricter: 10 attempts per 15 min for auth (login/signup)
+const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false, message: { error: 'Too many login attempts, please wait 15 minutes' } });
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/signup', authLimiter);
 app.use('/uploads', express.static(join(__dirname, 'uploads')));
 
 // Health check FIRST
@@ -59,6 +71,17 @@ app.use('/api/profile', profilesRoutes);
 app.use('/api/college-register', collegeRegisterRoutes);
 app.use('/api/notices', noticesRoutes);
 app.use('/api/messages', messagesRoutes);
+
+// Global error handler — prevents internal details from leaking
+app.use((err, req, res, next) => {
+  console.error('Server error:', err.message);
+  res.status(err.status || 500).json({ error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
+});
+
+// 404 handler for API routes
+app.use('/api/*', (req, res) => {
+  res.status(404).json({ error: 'API endpoint not found' });
+});
 
 // Serve static frontend build — AFTER all API routes
 const clientDist = join(__dirname, '..', 'client', 'dist');
