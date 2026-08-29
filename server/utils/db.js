@@ -128,26 +128,63 @@ export function col(name) {
   return jsonCol(name);
 }
 
+// ─── SRV DNS resolver (fixes Windows Node.js SRV resolution) ───
+import dns from 'dns';
+import { promisify } from 'util';
+const resolveSrv = promisify(dns.resolveSrv).bind(dns);
+
+async function resolveSrvUri(uri) {
+  // Extract hostname from mongodb+srv://user:pass@HOSTNAME/db
+  const match = uri.match(/@([^/]+)/);
+  if (!match) return uri;
+  const hostname = match[1];
+  try {
+    const records = await resolveSrv('_mongodb._tcp.' + hostname);
+    const hosts = records.map(r => r.name + ':' + r.port).join(',');
+    return uri.replace('@' + hostname, '@' + hosts).replace('mongodb+srv://', 'mongodb://');
+  } catch { return uri; }
+}
+
 // ─── Connect ───
 export async function connectDB() {
   const uri = process.env.MONGODB_URI;
   if (!uri) { console.log('  ⚠ No MONGODB_URI — using JSON file storage'); await seedDefaults(); return; }
 
+  const opts = {
+    serverSelectionTimeoutMS: 10000,
+    connectTimeoutMS: 10000,
+    tls: true,
+    tlsAllowInvalidCertificates: true,
+  };
+
+  // Try original URI first
   try {
-    client = new MongoClient(uri, {
-      serverSelectionTimeoutMS: 8000,
-      connectTimeoutMS: 8000,
-      tls: true,
-      tlsAllowInvalidCertificates: true,
-    });
+    client = new MongoClient(uri, opts);
     await client.connect();
     db = client.db('reciprocity');
     useMongo = true;
     console.log('  ✓ Connected to MongoDB Atlas');
   } catch (err) {
-    console.log('  ⚠ MongoDB Atlas unavailable — using JSON file storage');
-    console.log('    (' + err.message.substring(0, 80) + ')');
-    useMongo = false;
+    // SRV DNS often fails on Windows — try manual resolution
+    if (uri.includes('mongodb+srv://')) {
+      try {
+        const directUri = await resolveSrvUri(uri);
+        if (directUri !== uri) {
+          console.log('  ⟳ SRV resolution failed, trying direct connection...');
+          client = new MongoClient(directUri, opts);
+          await client.connect();
+          db = client.db('reciprocity');
+          useMongo = true;
+          console.log('  ✓ Connected to MongoDB Atlas (direct)');
+        }
+      } catch {
+        useMongo = false;
+      }
+    }
+    if (!useMongo) {
+      console.log('  ⚠ MongoDB Atlas unavailable — using JSON file storage');
+      console.log('    (' + err.message.substring(0, 80) + ')');
+    }
   }
   await seedDefaults();
 }

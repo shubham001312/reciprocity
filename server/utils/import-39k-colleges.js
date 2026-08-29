@@ -1,5 +1,5 @@
 import { col } from './db.js';
-import { readFileSync, readdirSync } from 'fs';
+import { readFileSync, readdirSync, existsSync } from 'fs';
 import { join } from 'path';
 
 const STATES_DIR = 'C:/Users/shubh/AppData/Local/Temp/indian-colleges-data/data/states';
@@ -69,6 +69,12 @@ export async function importAICTEColleges() {
   const dir = col('college-directory');
   if (await dir.countDocuments() > 150) {
     console.log(`  ✓ College directory already has ${await dir.countDocuments()} entries — skipping import`);
+    return;
+  }
+
+  // Gracefully skip if local data directory doesn't exist (e.g. on Render/cloud)
+  if (!existsSync(STATES_DIR)) {
+    console.log('  ⚠ AICTE data directory not found — skipping import (local dev only)');
     return;
   }
 
